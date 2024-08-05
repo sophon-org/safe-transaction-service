@@ -2,7 +2,7 @@ from logging import getLogger
 from typing import List, Optional, Type, Union
 
 from django.db.models import Model
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -12,10 +12,7 @@ from safe_transaction_service.notifications.tasks import send_notification_task
 
 from ..events.services.queue_service import get_queue_service
 from .models import (
-    ERC20Transfer,
-    ERC721Transfer,
     InternalTx,
-    ModuleTransaction,
     MultisigConfirmation,
     MultisigTransaction,
     SafeContract,
@@ -187,65 +184,6 @@ def _process_notification_event(
                     created,
                     instance,
                 )
-
-
-@receiver(
-    post_save,
-    sender=ModuleTransaction,
-    dispatch_uid="module_transaction.process_notification_event",
-)
-@receiver(
-    post_save,
-    sender=MultisigConfirmation,
-    dispatch_uid="multisig_confirmation.process_notification_event",
-)
-@receiver(
-    post_save,
-    sender=MultisigTransaction,
-    dispatch_uid="multisig_transaction.process_notification_event",
-)
-@receiver(
-    post_save,
-    sender=ERC20Transfer,
-    dispatch_uid="erc20_transfer.process_notification_event",
-)
-@receiver(
-    post_save,
-    sender=ERC721Transfer,
-    dispatch_uid="erc721_transfer.process_notification_event",
-)
-@receiver(
-    post_save, sender=InternalTx, dispatch_uid="internal_tx.process_notification_event"
-)
-@receiver(
-    post_save,
-    sender=SafeContract,
-    dispatch_uid="safe_contract.process_notification_event",
-)
-def process_notification_event(
-    sender: Type[Model],
-    instance: Union[
-        TokenTransfer,
-        InternalTx,
-        MultisigConfirmation,
-        MultisigTransaction,
-        SafeContract,
-    ],
-    created: bool,
-    **kwargs,
-) -> None:
-    return _process_notification_event(sender, instance, created, False)
-
-
-@receiver(
-    post_delete,
-    sender=MultisigTransaction,
-    dispatch_uid="multisig_transaction.process_delete_notification",
-)
-def process_delete_notification(
-    sender: Type[Model], instance: MultisigTransaction, *args, **kwargs
-):
-    return _process_notification_event(sender, instance, False, True)
 
 
 @receiver(
