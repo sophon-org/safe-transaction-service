@@ -258,7 +258,7 @@ class EventsIndexer(EthereumIndexer):
         if not log_receipts:
             return []
 
-        logger.debug("Excluding events processed recently")
+        logger.info("Excluding events processed recently")
         # Ignore already processed events
         not_processed_log_receipts = [
             log_receipt
@@ -269,31 +269,31 @@ class EventsIndexer(EthereumIndexer):
                 log_receipt["logIndex"],
             )
         ]
-        logger.debug("Decoding `log_receipts` of the events")
+        logger.info("Decoding `log_receipts` of the events")
         decoded_elements: List[EventData] = self.decode_elements(
             not_processed_log_receipts
         )
-        logger.debug("Decoded `log_receipts` of the events")
+        logger.info("Decoded `log_receipts` of the events")
         tx_hashes = OrderedDict.fromkeys(
             [event["transactionHash"] for event in not_processed_log_receipts]
         ).keys()
-        logger.debug("Prefetching and storing %d ethereum txs", len(tx_hashes))
+        logger.info("Prefetching and storing %d ethereum txs", len(tx_hashes))
         self.index_service.txs_create_or_update_from_tx_hashes(tx_hashes)
-        logger.debug("End prefetching and storing of ethereum txs")
-        logger.debug("Processing %d decoded events", len(decoded_elements))
+        logger.info("End prefetching and storing of ethereum txs")
+        logger.info("Processing %d decoded events", len(decoded_elements))
         processed_elements = []
         for decoded_element in decoded_elements:
             if processed_element := self._process_decoded_element(decoded_element):
                 processed_elements.append(processed_element)
-        logger.debug("End processing %d decoded events", len(decoded_elements))
+        logger.info("End processing %d decoded events", len(decoded_elements))
 
-        logger.debug("Marking events as processed")
+        logger.info("Marking events as processed")
         for log_receipt in not_processed_log_receipts:
             self.element_already_processed_checker.mark_as_processed(
                 log_receipt["transactionHash"],
                 log_receipt["blockHash"],
                 log_receipt["logIndex"],
             )
-        logger.debug("Marked events as processed")
+        logger.info("Marked events as processed")
 
         return processed_elements
