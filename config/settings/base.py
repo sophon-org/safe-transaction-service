@@ -281,6 +281,14 @@ CELERY_ROUTES = (
             {"queue": "indexing"},
         ),
         (
+            "safe_transaction_service.history.tasks.process*",
+            {"queue": "processing", "delivery_mode": "transient"},
+        ),
+        (
+            "safe_transaction_service.history.tasks.*",
+            {"queue": "indexing", "delivery_mode": "transient"},
+        ),
+        (
             "safe_transaction_service.history.tasks.*",
             {"queue": "indexing", "delivery_mode": "transient"},
         ),
