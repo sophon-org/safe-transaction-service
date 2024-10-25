@@ -1,16 +1,17 @@
 import logging
 import pickle
+import zlib
 from collections import defaultdict
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+from django.conf import settings
 from django.db.models import QuerySet
 from django.utils import timezone
 
 from eth_typing import HexStr
 from redis import Redis
-
-from gnosis.eth import EthereumClient, get_auto_ethereum_client
+from safe_eth.eth import EthereumClient, get_auto_ethereum_client
 
 from safe_transaction_service.tokens.models import Token
 from safe_transaction_service.utils.redis import get_redis
@@ -57,6 +58,7 @@ class TransactionService:
     def __init__(self, ethereum_client: EthereumClient, redis: Redis):
         self.ethereum_client = ethereum_client
         self.redis = redis
+        self.cache_expiration = settings.CACHE_ALL_TXS_VIEW
 
     #  Cache methods ---------------------------------
     def get_cache_key(self, safe_address: str, tx_id: str):
@@ -70,7 +72,7 @@ class TransactionService:
             for id_to_search in ids_to_search
         ]
         return [
-            pickle.loads(data) if data else None
+            pickle.loads(zlib.decompress(data)) if data else None
             for data in self.redis.mget(keys_to_search)
         ]
 
@@ -88,7 +90,9 @@ class TransactionService:
         """
         # Just store executed transactions older than 10 minutes
         to_store = {
-            self.get_cache_key(safe_address, tx_hash): pickle.dumps(txs)
+            self.get_cache_key(safe_address, tx_hash): zlib.compress(
+                pickle.dumps(txs), level=settings.CACHE_ALL_TXS_COMPRESSION_LEVEL
+            )
             for tx_hash, txs in ids_with_txs
             if all(
                 tx.execution_date
@@ -100,7 +104,7 @@ class TransactionService:
             pipe = self.redis.pipeline()
             pipe.mset(to_store)
             for key in to_store.keys():
-                pipe.expire(key, 60 * 60)  # Expire in one hour
+                pipe.expire(key, self.cache_expiration)
             pipe.execute()
 
     # End of cache methods ----------------------------
