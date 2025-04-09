@@ -34,4 +34,4 @@ redis==5.2.1
 requests==2.32.3
 git+https://github.com/sophon-org/safe-eth-py.git@sophonv7.1.1#egg=safe-eth-py
 # safe-eth-py[django]==6.0.0b37
-web3==6.20.2
+web3==7.8.0
