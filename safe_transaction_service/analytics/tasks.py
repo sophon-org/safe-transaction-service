@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from typing import List, Tuple
 
 from django.conf import settings
 from django.db.models import Count, F, Q
@@ -24,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 def _get_native_balances_multicall(
-    safe_addresses: List[str], balance_service: BalanceService
-) -> Tuple[int, int]:
+    safe_addresses: list[str], balance_service: BalanceService
+) -> tuple[int, int]:
     """
     Get native token balances for a batch of Safe addresses using batch RPC calls.
 
@@ -81,7 +80,7 @@ def _get_native_balances_multicall(
     return batch_total_balance, batch_safes_with_balance
 
 
-def _calculate_native_balances_batched() -> Tuple[int, int]:
+def _calculate_native_balances_batched() -> tuple[int, int]:
     """
     Calculate native token balances for all Safes using database iterators and chunked RPC calls.
     This approach is optimized for both memory efficiency and RPC endpoint reliability.
